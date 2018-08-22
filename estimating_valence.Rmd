@@ -1,0 +1,484 @@
+---
+title: "Estimating_valences"
+author: "Christian Rohrsen"
+date: "5 Juni 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(MASS)
+library(ISLR)
+require(gclus)
+library(rgl)
+source("http://www.phaget4.org/R/myImagePlot.R") 
+
+regplot=function(x,y){
+  
+  fit=lm(y~x)
+  plot(x,y)
+  abline(fit,col="red")
+}
+
+```
+
+## Entering data by hand
+
+
+```{r}
+## Inputting the expression table for all the G4s by hand. Normalized from 0 to 1.
+#data<-c(rep(0.9,8),0.6,0.3,0,0.9,0,0.3,0.9,0.9,0.6,rep(0.9,7),0.3,rep(0,8),0.3,0.3,rep(0,7),0.6,0.9,0.3,0.6,0.9,0.9,0.9,0.6,0.6,0,0.6,rep(0,6),0.6,0.9,0.6,0.9,0.6,0.9,0.6,0.9,0.6,0.9,0.6,0.9,0.9,0.9,0.9,rep(0,13),0.9,0.9,0.6,0.6,rep(0,13),0.6,0.6,0.6,rep(0,14),0.3,0.3,0.3,rep(0,14),0.9,0.9,0.9,rep(0,12),0.9,0.6,rep(0,15),0.3,0.3,rep(0,15),0.9,0.6,rep(0,15),0.9,0.6,rep(0,15),rep(0,14),0.3,0.6,rep(0,10),0.6,0,0,0,0.6,0,0,0,0,0.6,0,0,0,0,0,0,0,0.9,0.9,0.6,rep(0,13),0.9,0.3,rep(0,15),0.9,0.3,rep(0,7))
+
+#expression<- matrix(data,17,18)
+#expression<-t(expression)
+
+## Setting all the names of for the G4s and the Mushroom Bodies projecting sites for the table created above
+#colnames(expression)<-c("y1(PAM,PPL1)","ped(PAM,PPL1)","a2(PPL1)","a'2(PPL1)","a'1(PPL1)","y2(PPL1,PAM)","a3(PPL1)","a'3(PPL1)","b2(PAM)","b'2(PAM)","b1(PAM)","a1(PAM)","b'1(PAM)","y5(PAM)","y4(PAM)","y3(PAM)","ca(PPL2ab)")
+#rownames(expression)<-c("TH-G4","TH-G4+Cha-G80","DDC-G4(HL8)","DDC-G4(HL9)","MB-G80+NP47-G4","5htr1b-G4","5htr1b-G4+Cha-G80","NP7187-G4","MZ840-G4","c061-G4+MB-G80","c061-G4+MB-G80+Cha-G80","c259-G4+MB-G80","NP2758-G4","NP7323-G4","MZ19-G4+Cha-G80","NP6510-G4","NP5272-G4","NP1528-G4")
+
+data<-c(rep(0.9,8),0.6,0.3,0,0.9,0,0.3,0.9,0.9,0.6,rep(0.9,7),0.3,rep(0,8),0.3,0.3,rep(0,7),0.6,0.9,0.3,0.6,0.9,0.9,0.9,0.6,0.6,0,0.6,rep(0,6),0.6,0.9,0.6,0.9,0.6,0.9,0.6,0.9,0.6,0.9,0.6,0.9,0.9,0.9,0.9,rep(0,13),0.9,0.9,0.6,0.6,rep(0,13),0.6,0.6,0.6,rep(0,14),0.3,0.3,0.3,rep(0,14),0.9,0.9,0.9,rep(0,12),0.9,0.6,rep(0,15),0.3,0.3,rep(0,15),0.9,0.6,rep(0,15),0.9,0.6,rep(0,15),rep(0,14),0.3,0.6,rep(0,10),0.6,0,0,0,0.6,0,0,0,0,0.6,0,0,0,0,0,0,0,0.9,0.9,0.6,rep(0,13),0.9,0.3,rep(0,15),0.9,0.3,rep(0,7),rep(0,12),0.5,rep(0,13),0.5,rep(0,16),0.7,rep(0,9),0.1,0.1,rep(0,19),0.1,rep(0,16),0.1,rep(0,19),0.5,rep(0,18),0.3,rep(0,13),0.3,0.3,rep(0,14),0.1,rep(0,22),0.9,rep(0,3),0.1,rep(0,20),0.1,0.1,rep(0,11),0.9,0.9,0,0,0,0.9,0,0,0.9,0.9,0.9,0.9,0.3,0.9,0.9,0.3,rep(0,9),0.3,0.6,0.9,0,0.3,0.6,0.9,0.3,0,0,0,0.9,0.9,0.9,0,0,0,0.9,0.3,rep(0,8),0.6,rep(0,6),0.9,0.9,0.9,0.6,rep(0,6),0.6,0.9,0.9,0.9,0,0,0,0,0.9,0.9,0.6,0,0,0,0,0)
+expression<- matrix(data,17,36)
+expression<-t(expression)
+
+colnames(expression)<-c("y1(PAM,PPL1)","ped(PAM,PPL1)","a2(PPL1)","a'2(PPL1)","a'1(PPL1)","y2(PPL1,PAM)","a3(PPL1)","a'3(PPL1)","b2(PAM)","b'2(PAM)","b1(PAM)","a1(PAM)","b'1(PAM)","y5(PAM)","y4(PAM)","y3(PAM)","ca(PPL2ab)")
+rownames(expression)<-c("TH-G4","TH-G4+Cha-G80","DDC-G4(HL8)","DDC-G4(HL9)","MB-G80+NP47-G4","5htr1b-G4","5htr1b-G4+Cha-G80","NP7187-G4","MZ840-G4","c061-G4+MB-G80","c061-G4+MB-G80+Cha-G80","c259-G4+MB-G80","NP2758-G4","NP7323-G4","MZ19-G4+Cha-G80","NP6510-G4","NP5272-G4","NP1528-G4","mb025b-G4","mb032b-G4","mb056b-G4","mb058b-G4","mb060b-G4","mb065b-G4","mb109b-G4","mb299b-G4","mb301b-G4","mb304b-G4","mb315c-G4","mb438b-G4","mb439b-G4","58E02-G4","58E02-G4+th-G80","np5272-G4+mz840-G4","np6510-G4+np5272-G4","np6510-G4+mz840-G4")
+
+
+#testedflies<-expression[c(1,3,4,5,6,9,12,15,16,17,18),]
+testedflies<-expression
+
+library(raster)
+r <- raster(testedflies)
+plot(r, col = gray.colors(10, start = 1, end = 0, gamma = 2.2, alpha = NULL))
+
+myImagePlot(testedflies)
+
+```
+
+## Driver lines expression
+
+```{r}
+
+## Table correlating expression of brain regions in the available G4s
+
+my.abs     <- abs(cor(testedflies))
+my.colors  <- dmat.color(my.abs)
+my.ordered <- order.single(cor(testedflies))
+cpairs(testedflies, my.ordered, panel.colors=my.colors, gap=0.5)
+
+## Setting a threshold to see which regions are highly correlated: that means expressed in the same G4s
+bestcorr<-unique(my.abs[my.abs>0.8])
+bestcorr
+
+```
+
+
+
+
+```{r}
+# Do the PCA 
+
+my.prc <- prcomp(testedflies, center=TRUE, scale=FALSE)
+screeplot(my.prc, main="Scree Plot", xlab="Components")
+screeplot(my.prc, main="Scree Plot", type="line" )
+
+# DotPlot PC1
+
+load    <- my.prc$rotation
+sorted.loadings <- load[order(load[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+# DotPlot PC2
+
+sorted.loadings <- load[order(load[, 2]), 2]
+myTitle <- "Loadings Plot for PC2"
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+# Now draw the BiPlot
+biplot(my.prc, cex=c(0.5, 0.7))
+
+
+
+pca.scores<-NULL
+scores<-NULL
+for (i in 1:ncol(my.prc$rotation)){
+scores<- apply(testedflies,1,function(x)sum(x*my.prc$rotation[,i]))
+pca.scores<-cbind(pca.scores,scores)
+}
+
+pca.scores<-as.data.frame(pca.scores)
+colnames(pca.scores)<-c("PC1","PC2","PC3","PC4","PC5","PC6","PC7","PC8","PC9","PC10","PC11")
+
+# Plot the driver lines in the three first PCs
+plot3d(pca.scores[,1:3], col=length(rownames(testedflies)),size=10)
+
+text3d(pca.scores[,1:3],texts=rownames(testedflies),cex=0.7,font=2)
+text3d(my.prc$rotation[,1:3], texts=attributes(my.prc$rotation)$dimnames[[1]], col="red",cex=0.7,font=2)
+
+coords <- NULL
+for (i in 1:nrow(my.prc$rotation)) {
+  coords <- rbind(coords, rbind(c(0,0,0),my.prc$rotation[i,1:3]))
+}
+lines3d(coords, col="red", lwd=1)
+
+```
+
+
+
+```{r}
+# Apply the Varimax Rotation
+my.var <- varimax(my.prc$rotation)
+
+# Do a K means just to see how similar the expression of different driver lines are
+set.seed(42)
+cl <- kmeans(testedflies,10)
+cluster <- as.factor(cl$cluster)
+
+# Plot k-means in 3D
+plot3d(pca.scores[,1:3], col=cluster, main="k-means clusters",size=10)
+text3d(pca.scores[,1:3],texts=rownames(testedflies),cex=0.7,font=2)
+
+```
+
+
+
+
+
+
+```{r}
+## This is a Tree clustering to see how different each driver line expression pattern is
+di <- dist(testedflies, method="euclidean")
+tree <- hclust(di, method="ward.D")
+hierarchical.cluster <- as.factor((cutree(tree, k=10)-2) %% 3 +1)
+# that modulo business just makes the coming table look nicer
+plot(tree, xlab="")
+rect.hclust(tree, k=10, border="red")
+
+```
+
+## Importing data with behavioral scores
+
+```{r}
+
+## Importing the data measured from the flies targeting the different driver lines
+
+setwd("C:/Users/LocalAdmin/Desktop")
+
+################## Tmaze data import  ###############################
+
+Tmaze <- read.csv(file.choose(), header = TRUE, sep = ";", quote = "\"",dec = "," )
+colnames(Tmaze)[1] <- "Fly.line"
+nExp <- length (Tmaze[[1]])
+
+###### A less efficient way of calculating PIs
+
+Tmaze$PI <- vector("numeric", length = nExp)
+for(i in 1:nExp){
+  Tmaze$PI[i] <- (Tmaze[[i,2]]-Tmaze[[i,4]])/(Tmaze[[i,2]]+Tmaze[[i,4]])                 
+}
+
+###### This is in order to make groups according to their names 
+
+idGroup <- data.frame("Group"=levels(Tmaze[[1]]))
+
+
+### makemeans for the groups in the idGroup table.
+
+idGroup$mean <- NULL
+mean <- NULL
+
+idGroup$mean <- sapply(seq_len(nrow(idGroup)), function(i) { 
+  mean(Tmaze$PI[idGroup$Group[i]==Tmaze$Fly.line])
+})
+```
+
+```{r}
+############### Y-mazes import #################################
+
+## Import the scores with rows (fly), columns (driver line)
+scores <- read.delim("C:/Users/LocalAdmin/Desktop/data/Harvard data/screen/effect_occupancy_compact.txt", header=FALSE)
+
+line_names <- read.table("C:/Users/LocalAdmin/Desktop/data/Harvard data/screen/line_names.txt", quote="\"", comment.char="")
+
+colnames(scores)<- line_names$V1
+
+for (i in 1:48){
+  line_names$scores[1] <- mean(scores[,i],na.rm = TRUE)
+}
+
+```
+
+## Modify the the matrix in underrank cases
+
+```{r}
+# This is to create testedflies-shrink which takes the driver lines that are correlated, to reduce unknown variables in under-ranked conditions
+testedflies.shrink<- testedflies
+
+shrink1<-c(testedflies.shrink[,3],testedflies.shrink[,4],testedflies.shrink[,5],testedflies.shrink[,6])
+shrink2<-c(testedflies.shrink[,12],testedflies.shrink[,15],testedflies.shrink[,16],testedflies.shrink[,17])
+
+testedflies.shrink[,3]<-apply(testedflies.shrink[,3:6],1,mean)
+testedflies.shrink[,12]<-apply(testedflies.shrink[,c(12,15,16,17)],1,mean)
+
+testedflies.shrink<-subset(testedflies.shrink,select=c(1:3,7:14))
+```
+
+## Order the scores and expression so that they match
+
+```{r}
+
+expression_ordered <- rbind(expression[6,],expression[7,],expression[32,],expression[33,],expression[3,],expression[19:31,],expression[15,],expression[9,],expression[36,],expression[5,],expression[18,],expression[13,],expression[17,],expression[34,],expression[16,],expression[35,],expression[2,])
+
+colnames(expression_ordered)<-c("y1(PAM,PPL1)","ped(PAM,PPL1)","a2(PPL1)","a'2(PPL1)","a'1(PPL1)","y2(PPL1,PAM)","a3(PPL1)","a'3(PPL1)","b2(PAM)","b'2(PAM)","b1(PAM)","a1(PAM)","b'1(PAM)","y5(PAM)","y4(PAM)","y3(PAM)","ca(PPL2ab)")
+rownames(expression_ordered)<-c(rownames(expression)[6],rownames(expression)[7],rownames(expression)[32],rownames(expression)[33],rownames(expression)[3],rownames(expression)[19:31],rownames(expression)[15],rownames(expression)[9],rownames(expression)[36],rownames(expression)[5],rownames(expression)[18],rownames(expression)[13],rownames(expression)[17],rownames(expression)[34],rownames(expression)[16],rownames(expression)[35],rownames(expression)[2])
+
+names_ordered <- line_names$V1[c(-5,-20,-24,-25,-26,-34,-35,-36,-37,-38,-39,-40,-41,-42,-43,-45,-46,-47,-48)]
+scores_ordered <- line_names$scores[c(-5,-20,-24,-25,-26,-34,-35,-36,-37,-38,-39,-40,-41,-42,-43,-45,-46,-47,-48)]
+
+scores_ordered_lin<-unlist(scores[,c(-5,-20,-24,-25,-26,-34,-35,-36,-37,-38,-39,-40,-41,-42,-43,-45,-46,-47,-48)])
+
+
+r <- raster(expression_ordered)
+plot(r, col = gray.colors(10, start = 1, end = 0, gamma = 2.2, alpha = NULL))
+
+myImagePlot(expression_ordered)
+
+
+```
+
+## Resolve the linear differential equations
+
+```{r}
+# Solving the linear differential equation with the means
+#DANs.valence<-t(testedflies.shrink)%*%PIs
+DANs.valence<-t(expression_ordered)%*%scores_ordered
+barplot(t(DANs.valence),names.arg=rownames(DANs.valence),las=2,ylim=c(-1,1),mar = c(10, 5, 4, 2))
+
+# Doing a prediction
+expected.model<-apply(expression_ordered,1,function(x) sum(x*DANs.valence))
+
+# Plotting the expected (fit) vs the observed PI scores
+expected_observed<-rbind(expected.model,scores_ordered)
+rownames(expected_observed)<-c("expected","observed")
+
+plot(expected_observed[1,],ylim=c(-1,1),mar = c(10, 5, 4, 2),ylab="PI",xlab="",main="Observed vs Modelled PIs for the dopaminergic subsets")
+points(expected_observed[2,],col="red")
+segments(x0 = 0, y0 = 0, x1 = 30, y1 = 0, col = "blue", lwd = 1)
+legend(x=1,legend=c("Expected","Observed"),col=c("black","red"),text.col = c("black","red"), pch = c(1, 1),
+        bg = "gray90")
+```
+## Resolve the linear differential equations without making means before but with the whole data so that it finds its best fit
+
+```{r}
+
+## Solving with each singular fly value. The least mean squares should be solved separatedly
+
+expression_individual <- matrix(NA,nrow = 120*nrow(expression_ordered),ncol = 17)
+
+for (i in 1:ncol(expression_ordered)){
+expression_individual[,i] <- rep(expression_ordered[,i],each = 120,length.out = 120*nrow(expression_ordered), times=1)
+}
+
+scores_indiv <- scores_ordered_lin[!is.nan(scores_ordered_lin)]
+data_indiv <- expression_individual[!is.nan(scores_ordered_lin),]
+
+DANs.valence2<-t(data_indiv)%*%scores_indiv
+
+barplot(t(DANs.valence2),names.arg=rownames(DANs.valence),las=2,mar = c(10, 5, 4, 2))
+
+# Doing a prediction
+expected.model2<-apply(expression_ordered,1,function(x) sum(x*DANs.valence2))
+
+# Plotting the expected (fit) vs the observed PI scores
+expected_observed2<-rbind(expected.model2,scores_ordered)
+rownames(expected_observed2)<-c("expected","observed")
+
+plot(expected_observed2[1,],ylim=c(-1,1),mar = c(10, 5, 4, 2),ylab="PI",xlab="",main="Observed vs Modelled PIs for the dopaminergic subsets")
+points(expected_observed2[2,],col="red")
+segments(x0 = 0, y0 = 0, x1 = 30, y1 = 0, col = "blue", lwd = 1)
+legend(x=1,legend=c("Expected","Observed"),col=c("black","red"),text.col = c("black","red"), pch = c(1, 1),
+        bg = "gray90")
+
+```
+## Resolve the linear differential equations without making means before but with the whole data so that it finds its best fit. With lm
+
+```{r}
+
+## Solving with each singular fly value. The least mean squares should be solved separatedly
+
+linear_model3<- lm(scores_indiv ~ data_indiv[,1]+data_indiv[,2]+data_indiv[,3]+data_indiv[,4]+data_indiv[,5]+data_indiv[,6]+data_indiv[,7]+data_indiv[,8]+data_indiv[,9]+data_indiv[,10]+data_indiv[,11]+data_indiv[,12]+data_indiv[,13]+data_indiv[,14]+data_indiv[,15]+data_indiv[,16]+data_indiv[,17])
+
+summary(linear_model3)
+
+barplot(linear_model3$coefficients,names.arg=c("Incercept",rownames(DANs.valence)),las=2,mar = c(10, 5, 4, 2))
+
+
+```
+
+## Bayesian estimation
+
+```{r}
+
+library(MCMCpack)
+
+bayes_model <- MCMCregress(scores_ordered ~  expression_ordered[,1] + expression_ordered[,2] + expression_ordered[,3] + expression_ordered[,4] + expression_ordered[,5] + expression_ordered[,6] + expression_ordered[,7] + expression_ordered[,8] + expression_ordered[,9] + expression_ordered[,10] + expression_ordered[,11] + expression_ordered[,12] + expression_ordered[,13] + expression_ordered[,14] + expression_ordered[,15] + expression_ordered[,16] + expression_ordered[,17])
+
+bayes_model <- MCMCregress(scores_indiv ~ data_indiv[,1]+data_indiv[,2]+data_indiv[,3]+data_indiv[,4]+data_indiv[,5]+data_indiv[,6]+data_indiv[,7]+data_indiv[,8]+data_indiv[,9]+data_indiv[,10]+data_indiv[,11]+data_indiv[,12]+data_indiv[,13]+data_indiv[,14]+data_indiv[,15]+data_indiv[,16]+data_indiv[,17])
+
+summary(bayes_model)
+plot(bayes_model)
+HPDinterval(bayes_model)
+effectiveSize(bayes_model)
+raftery.diag(bayes_model)
+acf(bayes_model)
+
+library(arm)
+
+bayes_model2<-bayesglm(scores_ordered ~ expression_ordered[,1] + expression_ordered[,1] + expression_ordered[,2] + expression_ordered[,3] + expression_ordered[,4] + expression_ordered[,5] + expression_ordered[,6] + expression_ordered[,7] + expression_ordered[,8] + expression_ordered[,9] + expression_ordered[,10] + expression_ordered[,11] + expression_ordered[,12] + expression_ordered[,13] + expression_ordered[,14] + expression_ordered[,15] + expression_ordered[,16] + expression_ordered[,17])
+
+bayes_model3<-bayesglm(scores_indiv ~ data_indiv[,1]+data_indiv[,2]+data_indiv[,3]+data_indiv[,4]+data_indiv[,5]+data_indiv[,6]+data_indiv[,7]+data_indiv[,8]+data_indiv[,9]+data_indiv[,10]+data_indiv[,11]+data_indiv[,12]+data_indiv[,13]+data_indiv[,14]+data_indiv[,15]+data_indiv[,16]+data_indiv[,17])
+
+summary(bayes_model2)
+
+barplot(bayes_model2$coefficients,names.arg=c("Incercept",rownames(DANs.valence)),las=2,ylim=c(-1,1),mar = c(10, 5, 4, 2))
+barplot(bayes_model3$coefficients,names.arg=c("Incercept",rownames(DANs.valence)),las=2,ylim=c(-1,1),mar = c(10, 5, 4, 2))
+#arrows(bayes_model2$coefficients, bayes_model2$coefficients - bayes_model2$deviance, bayes_model2$coefficients + bayes_model2$deviance, lwd = 1.5, angle = 90,
+#       code = 3, length = 0.05)
+
+
+```
+
+## Bayesian estimates
+
+```{r}
+
+library(MCMCglmm)
+
+set.seed(14)
+#prior.m3 <- list(
+#  R=list(V=1, n=1, fix=1),
+#  G=list(G1=list(V        = diag(8),
+#                 n        = 8,
+#                 alpha.mu = rep(0, 8),
+#                 alpha.V  = diag(8)*25^2),
+#         G2=list(V        = diag(4),
+#                 n        = 4,
+#                 alpha.mu = rep(0, 4),
+#                 alpha.V  = diag(4)*25^2)))
+prior.m3 <- list()
+
+m3 <- MCMCglmm(scores_indiv ~  (data_indiv[,1]+data_indiv[,2]+data_indiv[,3]+data_indiv[,4]+data_indiv[,5]+data_indiv[,6]+data_indiv[,7]+data_indiv[,8]+data_indiv[,9]+data_indiv[,10]+data_indiv[,11]+data_indiv[,12]+data_indiv[,13]+data_indiv[,14]+data_indiv[,15]+data_indiv[,16]+data_indiv[,17])^17, family="gaussian", prior  = prior.m3, thin   = 1, burnin = 3000, nitt   = 4000)
+
+summary(m3$Sol)
+par(mfrow=c(3,2), mar=c(2,2,1,0))
+plot(m3$Sol, auto.layout=F)
+
+plot.acfs <- function(x) {
+  n <- dim(x)[2]
+  par(mfrow=c(ceiling(n/2),2), mar=c(3,2,3,0))
+  for (i in 1:n) {
+    acf(x[,i], lag.max=100, main=colnames(x)[i])
+    grid()
+  }
+}
+plot.acfs(m3$Sol)
+
+trace.plots <- function(x) {
+  n <- dim(x)[2]
+  par(mfrow=c(ceiling(n/2),2), mar=c(0,0.5,1,0.5))
+  for (i in 1:n) {
+    plot(as.numeric(x[,i]), t="l", main=colnames(x)[i], xaxt="n", yaxt="n")
+  }
+}
+trace.plots(m4$Sol)
+
+## This is for running several in parallel to check if they always converge to the same values
+
+library(parallel)
+
+set.seed(1)
+m6 <- mclapply(1:4, function(i) {
+  MCMCglmm(pronoun ~ (a + b + c)^3,
+                   ~us(1 + a : b : c):subject +
+                    us(1 + a : b)      :item,
+           data   = d,
+           family = "categorical",
+           prior  = prior.m5,
+           thin   = 20,
+           burnin = 3000,
+           nitt   = 23000)
+}, mc.cores=4)
+
+m6 <- lapply(m6, function(m) m$Sol)
+m6 <- do.call(mcmc.list, m6)
+
+## Quantifying convergence
+library(coda)
+
+par(mfrow=c(4,2), mar=c(2,2,1,2))
+gelman.plot(m6, auto.layout=F)
+
+gelman.diag(m6)
+par(mfrow=c(8,2), mar=c(2, 1, 1, 1))
+plot(m6, ask=F, auto.layout=F)
+
+plot.estimates <- function(x) {
+  if (class(x) != "summary.mcmc")
+    x <- summary(x)
+  n <- dim(x$statistics)[1]
+  par(mar=c(2, 7, 4, 1))
+  plot(x$statistics[,1], n:1,
+       yaxt="n", ylab="",
+       xlim=range(x$quantiles)*1.2,
+       pch=19,
+       main="Posterior means and 95% credible intervals")
+  grid()
+  axis(2, at=n:1, rownames(x$statistics), las=2)
+  arrows(x$quantiles[,1], n:1, x$quantiles[,5], n:1, code=0)
+  abline(v=0, lty=2)
+}
+
+plot.estimates(m6)
+
+
+```
+
+## Bayesian nonlinear estimates
+
+```{r}
+
+library(brms)
+
+fit_zinb1 <- brm(count ~ persons + child + camper, data = zinb,
+family = zero_inflated_poisson("log"))
+
+summary(fit_zinb1)
+
+marginal_effects(fit_zinb1)
+
+
+
+```
+
+
+## Save results
+
+```{r}
+
+write.table(DANs.valence, "DANsvalence.txt", sep="\t", row.names = TRUE,col.names = FALSE)
+write.table(expected.model2, "expectedVSobservedmodel.txt", sep="\t", row.names = TRUE,col.names = TRUE)
+
+```
+
